@@ -4,6 +4,8 @@ var encryption = require("./encryption");
 
 var Anesidora = (function() {
     var Anesidora = function(username, password, partnerInfo) {
+        Anesidora.ENDPOINT = "://tuner.pandora.com/services/json/";
+
         if (partnerInfo == null) {
             partnerInfo = {
                 "username": "android",
@@ -13,13 +15,16 @@ var Anesidora = (function() {
                 "encryptPassword": "6#26FRL$ZWD"
             };
         }
+        else if (partnerInfo.username === "pandora one") {
+            Anesidora.ENDPOINT = Anesidora.ENDPOINT.replace("tuner", "internal-tuner");
+        }
+
         this.username = username;
         this.password = password;
         this.partnerInfo = _.extend(partnerInfo, {"version": "5"});
         this.authData = null;
     };
 
-    Anesidora.ENDPOINT = "://tuner.pandora.com/services/json/";
     var endpoint = function(secure) {
         return (secure ? "https" : "http") + Anesidora.ENDPOINT;
     };

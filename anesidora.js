@@ -1,11 +1,8 @@
 var request = require("request");
-var _ = require("underscore");
 var encryption = require("./encryption");
 
 var Anesidora = (function() {
     var Anesidora = function(username, password, partnerInfo) {
-        Anesidora.ENDPOINT = "://tuner.pandora.com/services/json/";
-
         if (partnerInfo == null) {
             partnerInfo = {
                 "username": "android",
@@ -15,14 +12,17 @@ var Anesidora = (function() {
                 "encryptPassword": "6#26FRL$ZWD"
             };
         }
-        else if (partnerInfo.username === "pandora one") {
-            Anesidora.ENDPOINT = Anesidora.ENDPOINT.replace("tuner", "internal-tuner");
-        }
 
         this.username = username;
         this.password = password;
-        this.partnerInfo = _.extend(partnerInfo, {"version": "5"});
+        this.partnerInfo = partnerInfo;
+        this.partnerInfo.version = "5";
         this.authData = null;
+
+        var int_users = ['pandora one', 'windowsgadget'];
+        Anesidora.ENDPOINT = int_users.includes(partnerInfo.username) ?
+            '://internal-tuner.pandora.com/services/json' :
+            '://tuner.pandora.com/services/json/';
     };
 
     var endpoint = function(secure) {
@@ -61,7 +61,12 @@ var Anesidora = (function() {
             "qs": {
                 "method": "auth.partnerLogin"
             },
-            "body": JSON.stringify(_.omit(partnerInfo, ["decryptPassword", "encryptPassword"]))
+            "body": JSON.stringify({
+                username: partnerInfo.username,
+                password: partnerInfo.password,
+                deviceModel: partnerInfo.deviceModel,
+                version: partnerInfo.version
+            })
         }, unwrap(function(err, result) {
             if (err) return callback(err);
             result.syncTimeOffset = decryptSyncTime(partnerInfo.decryptPassword, result.syncTime) - seconds();
@@ -118,11 +123,9 @@ var Anesidora = (function() {
 
         var secure = false;
         if (method === "station.getPlaylist") secure = true;
-        var body = _.extend(data, {
-            "userAuthToken": that.authData.userAuthToken,
-            "syncTime": that.authData.syncTimeOffset + seconds()
-        });
-        var encryptedBody = encryption.encrypt(that.partnerInfo.encryptPassword, JSON.stringify(body)).toString("hex").toLowerCase();
+        data.userAuthToken = that.authData.userAuthToken;
+        data.syncTime = that.authData.syncTimeOffset + seconds();
+        var encryptedBody = encryption.encrypt(that.partnerInfo.encryptPassword, JSON.stringify(data)).toString("hex").toLowerCase();
         if (method === "test.checkLicensing") encryptedBody = null;
         request({
             "method": "post",

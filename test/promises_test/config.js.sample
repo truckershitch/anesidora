@@ -1,0 +1,2 @@
+exports.PANDORA_EMAIL = process.env.PANDORA_EMAIL || 'you@wish.com';
+exports.PANDORA_PASSWORD = process.env.PANDORA_PASSWORD || 'secretpassword';

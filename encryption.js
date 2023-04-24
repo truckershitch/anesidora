@@ -1,11 +1,11 @@
 var crypto = require("crypto");
-var iv = new Buffer("");
+var iv = Buffer.from("");
 
 var PADDING_LENGTH = 16;
 var PADDING = Array(PADDING_LENGTH).join("\0");
 
 var createCryptor = function(key) {
-    key = new Buffer(key);
+    key = Buffer.from(key);
     return function(data) {
         var cipher = crypto.createCipheriv("bf-ecb", key, iv);
         cipher.setAutoPadding(false);
@@ -25,7 +25,7 @@ var createCryptor = function(key) {
 };
 
 var createDecryptor = function(key) {
-    key = new Buffer(key);
+    key = Buffer.from(key);
     return function(data) {
         var cipher = crypto.createDecipheriv("bf-ecb", key, iv);
         cipher.setAutoPadding(false);
@@ -42,7 +42,7 @@ var createDecryptor = function(key) {
 
 exports.decrypt = function(password, ciphered) {
     var blowfish = createDecryptor(password);
-    var buff = blowfish(new Buffer(ciphered, "hex"));
+    var buff = blowfish(Buffer.from(ciphered, "hex"));
 
     return buff;
 };

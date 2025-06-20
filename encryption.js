@@ -60,6 +60,7 @@ exports.decrypt = function(password, ciphered) {
     var decrypted = bf.decrypt(ciphered);
     decrypted = bf.trimZeros(decrypted);
 
+    console.log("decrypted: ", decrypted);
     return decrypted;
 };
     
@@ -67,5 +68,6 @@ exports.encrypt = function(password, plain) {
     var bf = new Blowfish(password);
     var encrypted = bf.encrypt(plain);
 
+    console.log("encrypted: ", encrypted);
     return encrypted;
 };

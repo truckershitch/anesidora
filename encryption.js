@@ -56,16 +56,16 @@ var PADDING = Array(PADDING_LENGTH).join("\0");
 // };
 
 exports.decrypt = function(password, ciphered) {
-    const bf = new Blowfish(password);
-    let decrypted = bf.decrypt(ciphered);
+    var bf = new Blowfish(password);
+    var decrypted = bf.decrypt(ciphered);
     decrypted = bf.trimZeros(decrypted);
 
     return decrypted;
 };
     
 exports.encrypt = function(password, plain) {
-    const bf = new Blowfish(password);
-    const encrypted = bf.encrypt(plain);
+    var bf = new Blowfish(password);
+    var encrypted = bf.encrypt(plain);
 
     return encrypted;
 };

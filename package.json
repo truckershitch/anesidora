@@ -21,7 +21,7 @@
   "homepage": "https://github.com/dlom/anesidora#readme",
   "dependencies": {
     "request": "^2.88.2",
-    "javascript-blowfish": "https://github.com/truckershitch/javascript-blowfish.git"
+    "javascript-blowfish": "git://github.com/truckershitch/javascript-blowfish.git#master"
   },
   "devDependencies": {
     "faucet": "0.0.1",

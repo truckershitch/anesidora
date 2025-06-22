@@ -5,7 +5,7 @@ var testString = "123456789";
 var testPassword = "password";
 var testEncrypted = "da6003664651d153815e183f310c8800"; // calculated using PHP's mcrypt_encrypt()
 
-test("encryption.decrypt()", function(t) {
+test("encryption.decrypt_new()", function(t) {
     t.plan(2);
     var buff = encryption.decrypt(testPassword, testEncrypted);
     t.ok(buff instanceof Buffer, "returns a buffer");
@@ -13,7 +13,7 @@ test("encryption.decrypt()", function(t) {
     t.equal(plain, testString, "decrypts correctly");
 });
 
-test("encryption.encrypt()", function(t) {
+test("encryption.encrypt_new()", function(t) {
     t.plan(2);
     var buff = encryption.encrypt(testPassword, testString);
     t.ok(buff instanceof Buffer, "returns a buffer");

@@ -1,10 +1,9 @@
-import { Blowfish } from "egoroof-blowfish";
 var crypto = require("crypto");
-// var Blowfish = require("javascript-blowfish");
 var iv = Buffer.from("");
 
 var PADDING_LENGTH = 16;
 var PADDING = Array(PADDING_LENGTH).join("\0");
+var PADSTRING = PADDING.toString();
 
 var createCryptor = function(key) {
     key = Buffer.from(key);
@@ -56,76 +55,44 @@ exports.encrypt = function(password, plain) {
     return buff;
 };
 
-// exports.decrypt_rus = function(password, ciphered) {
-//     var bf = new Blowfish(password, 'ecb');
-//     // var debased = bf.base64Decode(ciphered);
-//     // var decrypted = bf.decrypt(debased);
-//     var decrypted = bf.decrypt(ciphered, '');
-
-//     decrypted = bf.trimZeros(decrypted);
-
-//     console.log("decrypted: ", decrypted);
-//     return decrypted;
-// };
-    
-// exports.encrypt_rus = function(password, plain) {
-//     var bf = new Blowfish(password, 'ecb');
-//     var encrypted = bf.encrypt(plain, '');
-//     // encrypted = bf.base64Encode(encrypted);
-
-//     console.log("encrypted: ", encrypted);
-//     return encrypted;
-// };
-
-exports.decrypt_new = function(password, ciphered) {
-    // import("egoroof-blowfish")
-    //     .then(module => {
-    //         const Blowfish = module.Blowfish;
-    //         const bf = new Blowfish(password, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
-
-    //         const decoded = bf.decode(ciphered, Blowfish.TYPE.STRING);
-
-    //         // console.log("decrypted finished: ", decoded);
-    //         return decoded;
-    //     });
-
-    const bf = new Blowfish(password, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
-    const decoded = bf.decode(ciphered, Blowfish.TYPE.STRING);
-
-    // console.log("decrypted finished: ", decoded);
-    return decoded;
+var new_encryptor = async function(key, data) {
+    return import("egoroof-blowfish")
+        .then(({Blowfish}) => {
+            var padLength = PADDING_LENGTH - (data.length % PADDING_LENGTH);
+            if (padLength === PADDING_LENGTH) {
+                padLength = 0;
+            }
+            const bf = new Blowfish(key, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
+            const encoded = bf.encode(data, Blowfish.TYPE.STRING);
+            
+            return encoded;        
+         });
 };
 
-exports.encrypt_new = function(password, plain) {
-    // encoded = 'not working';
-    // import("egoroof-blowfish")
-    //     .then(module => {
-    //         const Blowfish = module.Blowfish;
-    //         const bf = new Blowfish(password, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
+var new_decryptor = async function(key, data) {
+    return import("egoroof-blowfish")
+        .then(({Blowfish}) => {
+            var padLength = PADDING_LENGTH - (data.length % PADDING_LENGTH);
+            if (padLength === PADDING_LENGTH) {
+                padLength = 0;
+            }
+            const bf = new Blowfish(key, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
+            const decoded = bf.decode(Buffer.from(data, "hex"), Blowfish.TYPE.UINT8_ARRAY); // this looks good!
 
-    //         // encoded = bf.encode(plain, Blowfish.TYPE.STRING);
-    //         // const buffer = Buffer.from(encoded);
-    //         // encoded = buffer.toString('hex').toLowerCase();
+            return decoded;
+        });
+};
 
-    //         encoded = Buffer.from(bf.encode(plain, Blowfish.TYPE.STRING)).toString('hex').toLowerCase();
-    //         // const buffer = Buffer.from(encoded);
-    //         // encoded = buffer.toString('hex').toLowerCase();
-            
-    //         // console.log("encrypted finished: ", encoded);
-    //         return 'really messed up';
-    //     });
+exports.decrypt_new = async function(password, ciphered) {
+    let result = await new_decryptor(password, ciphered);
+    let resbuffed = Buffer.from(result, "hex");
 
-    encoded = 'not working';
-    const bf = new Blowfish(password, Blowfish.MODE.ECB, Blowfish.PADDING.NULL);
+    return resbuffed;
+};
 
-    // encoded = bf.encode(plain, Blowfish.TYPE.STRING);
-    // const buffer = Buffer.from(encoded);
-    // encoded = buffer.toString('hex').toLowerCase();
-
-    encoded = Buffer.from(bf.encode(plain, Blowfish.TYPE.STRING)).toString('hex').toLowerCase();
-    // const buffer = Buffer.from(encoded);
-    // encoded = buffer.toString('hex').toLowerCase();
+exports.encrypt_new = async function(password, plain) {
+    let result = await new_encryptor(password, plain);
+    let resbuffed = Buffer.from(result, "hex");
     
-    // console.log("encrypted finished: ", encoded);
-    return encoded;
+    return resbuffed;
 };

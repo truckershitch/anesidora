@@ -50,8 +50,10 @@ var Anesidora = (function() {
         };
     };
 
-    var decryptSyncTime = function(password, ciphered) {
-        return parseInt(encryption.decrypt(password, ciphered).toString("utf8", 4, 14), 10);
+    var decryptSyncTime = async function(password, ciphered) {
+        result = await encryption.decrypt_new(password, ciphered);
+        resParsedInt = parseInt(result.toString("utf8", 4, 14), 10);
+        return resParsedInt;
     };
 
     var partnerLogin = function(partnerInfo, callback) {
@@ -69,28 +71,36 @@ var Anesidora = (function() {
             })
         }, unwrap(function(err, result) {
             if (err) return callback(err);
-            result.syncTimeOffset = decryptSyncTime(partnerInfo.decryptPassword, result.syncTime) - seconds();
-            callback(null, result);
+            stime = decryptSyncTime(partnerInfo.decryptPassword, result.syncTime)
+                stime.then(res => {
+                    result.syncTimeOffset = res - seconds();
+                    callback(null, result);
+                });
         }));
     };
 
     var userLogin = function(encryptPassword, partnerData, username, password, callback) {
-        request({
-            "method": "post",
-            "url": endpoint(true),
-            "qs": {
-                "method": "auth.userLogin",
-                "auth_token": partnerData.partnerAuthToken,
-                "partner_id": partnerData.partnerId
-            },
-            "body": encryption.encrypt(encryptPassword, JSON.stringify({
-                "loginType": "user",
-                "username": username,
-                "password": password,
-                "partnerAuthToken": partnerData.partnerAuthToken,
-                "syncTime": partnerData.syncTimeOffset + seconds()
-            })).toString("hex").toLowerCase()
-        }, unwrap(callback));
+        let bodyjson = JSON.stringify({
+            "loginType": "user",
+            "username": username,
+            "password": password,
+            "partnerAuthToken": partnerData.partnerAuthToken,
+            "syncTime": partnerData.syncTimeOffset + seconds()
+        });
+        encryption.encrypt_new(encryptPassword, bodyjson)
+            .then((result) => {
+                bodyenc = result.toString("hex").toLowerCase();
+                request({
+                    "method": "post",
+                    "url": endpoint(true),
+                    "qs": {
+                        "method": "auth.userLogin",
+                        "auth_token": partnerData.partnerAuthToken,
+                        "partner_id": partnerData.partnerId
+                    },
+                    "body": bodyenc
+                }, unwrap(callback));
+        });
     };
 
     Anesidora.prototype.login = function(callback) {
@@ -125,19 +135,29 @@ var Anesidora = (function() {
         if (method === "station.getPlaylist") secure = true;
         data.userAuthToken = that.authData.userAuthToken;
         data.syncTime = that.authData.syncTimeOffset + seconds();
-        var encryptedBody = encryption.encrypt(that.partnerInfo.encryptPassword, JSON.stringify(data)).toString("hex").toLowerCase();
-        if (method === "test.checkLicensing") encryptedBody = null;
-        request({
-            "method": "post",
-            "url": endpoint(secure),
-            "qs": {
-                "method": method,
-                "auth_token": that.authData.userAuthToken,
-                "partner_id": that.authData.partnerId,
-                "user_id": that.authData.userId
-            },
-            "body": encryptedBody
-        }, unwrap(callback));
+
+        function sendrequest(encryptedBody) {
+            request({
+                "method": "post",
+                "url": endpoint(secure),
+                "qs": {
+                    "method": method,
+                    "auth_token": that.authData.userAuthToken,
+                    "partner_id": that.authData.partnerId,
+                    "user_id": that.authData.userId
+                },
+                "body": encryptedBody
+            }, unwrap(callback));
+        };
+
+        if (method === "test.checkLicensing") {  // encryptedBody === null
+            sendrequest(null);
+        } else {
+            const res = encryption.encrypt_new(that.partnerInfo.encryptPassword, JSON.stringify(data));
+            res.then((result) => {
+                sendrequest(result.toString("hex").toLowerCase());
+            });
+        }
     };
 
     return Anesidora;
